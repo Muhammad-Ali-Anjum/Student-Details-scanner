@@ -1,7 +1,9 @@
+// api/generate.js
 export default function handler(req, res) {
   if (req.method === "POST") {
     const { name, course, duration, completion, org, role, cnic, photoData } = req.body;
 
+    // Generate HTML content dynamically
     const htmlContent = `
 <!DOCTYPE html>
 <html>
@@ -9,8 +11,8 @@ export default function handler(req, res) {
   <meta charset="UTF-8">
   <title>${name} - Student Details</title>
   <style>
-    body{font-family:Arial;padding:20px;}
-    img{max-width:150px;border:1px solid #ccc;margin-top:10px;}
+    body { font-family: Arial; padding: 20px; }
+    img { max-width: 150px; border: 1px solid #ccc; margin-top: 10px; }
   </style>
 </head>
 <body>

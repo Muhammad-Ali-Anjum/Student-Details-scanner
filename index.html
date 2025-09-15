@@ -15,7 +15,7 @@
   <form id="studentForm">
     <input type="text" id="name" placeholder="Full Name" required>
     <input type="text" id="course" placeholder="Course / Event Title" required>
-    <input type="text" id="duration" placeholder="Duration" required>
+    <input type="text" id="duration" placeholder="Duration (e.g., 1 Month)" required>
     <input type="date" id="completion" required>
     <input type="text" id="org" placeholder="Organization Name" required>
     <input type="text" id="role" placeholder="Role / Achievement" required>
@@ -47,7 +47,7 @@
       reader.onload = async function(e) {
         const photoData = e.target.result;
 
-        // Send data to serverless function
+        // Send form data to serverless function
         const response = await fetch("/api/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -57,11 +57,11 @@
         const data = await response.json();
         const url = data.url;
 
-        // Generate QR code pointing to hosted URL
+        // Generate QR code
         document.getElementById("qrcode").innerHTML = "";
         new QRCode(document.getElementById("qrcode"), { text: url, width: 200, height: 200 });
 
-        document.getElementById("link").innerHTML = `<a href="${url}" target="_blank">${url}</a>`;
+        document.getElementById("link").innerHTML = `<a href="${url}" target="_blank">Open Student Page</a>`;
         document.getElementById("qrSection").style.display = "block";
       };
 

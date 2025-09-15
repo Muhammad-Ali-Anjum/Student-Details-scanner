@@ -6,10 +6,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; }
-    input { display: block; margin: 8px 0; padding: 8px; width: 300px; }
-    img { max-width: 200px; border: 1px solid #ccc; margin-top: 10px; }
+    input, button { display: block; margin: 8px 0; padding: 8px; width: 300px; }
     .qr-box { margin-top: 20px; }
-    button { margin-top: 10px; padding: 8px 12px; }
   </style>
 </head>
 <body>
@@ -17,28 +15,23 @@
   <form id="studentForm">
     <input type="text" id="name" placeholder="Full Name" required>
     <input type="text" id="course" placeholder="Course / Event Title" required>
-    <input type="text" id="duration" placeholder="Duration (e.g., 1 Month)" required>
+    <input type="text" id="duration" placeholder="Duration" required>
     <input type="date" id="completion" required>
     <input type="text" id="org" placeholder="Organization Name" required>
     <input type="text" id="role" placeholder="Role / Achievement" required>
     <input type="text" id="cnic" placeholder="CNIC" required>
     <input type="file" id="photo" accept="image/*" required>
-    <button type="button" onclick="generateFiles()">Generate Student Page + QR</button>
+    <button type="button" onclick="generateQR()">Generate Student Page + QR</button>
   </form>
 
-  <div id="downloadSection" style="margin-top:20px; display:none;">
-    <h3>Download Files</h3>
-    <a id="downloadHTML" download="student_details.html">⬇ Download Student Page</a><br><br>
-    <div class="qr-box" id="qrcode"></div>
-    <a id="downloadQR" style="display:none" download="StudentQR.png">⬇ Download QR Code</a>
-    <p style="color:red; font-size:14px;">
-      ⚠ After downloading <b>student_details.html</b>, upload it to Google Drive, make it public, 
-      then regenerate QR with the public link.
-    </p>
+  <div id="qrSection" style="display:none;">
+    <h3>Scan QR Code to view Student Details</h3>
+    <div id="qrcode" class="qr-box"></div>
+    <p id="link"></p>
   </div>
 
   <script>
-    function generateFiles() {
+    async function generateQR() {
       const name = document.getElementById("name").value;
       const course = document.getElementById("course").value;
       const duration = document.getElementById("duration").value;
@@ -51,53 +44,27 @@
       if (!photoFile) { alert("Please upload a photo."); return; }
 
       const reader = new FileReader();
-      reader.onload = function(e) {
+      reader.onload = async function(e) {
         const photoData = e.target.result;
 
-        // Student details page content
-        const studentHTML = `
-          <!DOCTYPE html>
-          <html>
-          <head><meta charset="UTF-8"><title>Student Details</title>
-          <style>
-            body{font-family:Arial;padding:20px;}
-            img{max-width:150px;border:1px solid #ccc;margin-top:10px;}
-          </style>
-          </head>
-          <body>
-            <h2>Student Details</h2>
-            <p><b>Full Name:</b> ${name}</p>
-            <p><b>Course:</b> ${course}</p>
-            <p><b>Duration:</b> ${duration}</p>
-            <p><b>Completion Date:</b> ${completion}</p>
-            <p><b>Organization:</b> ${org}</p>
-            <p><b>Role / Achievement:</b> ${role}</p>
-            <p><b>CNIC:</b> ${cnic}</p>
-            <img src="${photoData}" alt="Student Photo">
-          </body>
-          </html>
-        `;
+        // Send data to serverless function
+        const response = await fetch("/api/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, course, duration, completion, org, role, cnic, photoData })
+        });
 
-        // Create downloadable HTML file
-        const blob = new Blob([studentHTML], { type: "text/html" });
-        const url = URL.createObjectURL(blob);
-        const htmlLink = document.getElementById("downloadHTML");
-        htmlLink.href = url;
+        const data = await response.json();
+        const url = data.url;
 
-        // Generate QR Code (for now local link, later replace with hosted public link)
+        // Generate QR code pointing to hosted URL
         document.getElementById("qrcode").innerHTML = "";
         new QRCode(document.getElementById("qrcode"), { text: url, width: 200, height: 200 });
 
-        // Enable download QR option
-        setTimeout(() => {
-          const qrImg = document.querySelector("#qrcode img").src;
-          const downloadLink = document.getElementById("downloadQR");
-          downloadLink.href = qrImg;
-          downloadLink.style.display = "inline-block";
-        }, 1000);
-
-        document.getElementById("downloadSection").style.display = "block";
+        document.getElementById("link").innerHTML = `<a href="${url}" target="_blank">${url}</a>`;
+        document.getElementById("qrSection").style.display = "block";
       };
+
       reader.readAsDataURL(photoFile);
     }
   </script>
